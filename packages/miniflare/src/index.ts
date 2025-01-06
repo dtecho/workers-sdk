@@ -1355,7 +1355,7 @@ export class Miniflare {
 						const targetService = servicesArray.find(
 							(s) => s.name === binding.service?.name
 						);
-						assert(targetService && "worker" in targetService);
+						if (!targetService || !("worker" in targetService)) continue;
 						if (
 							targetService.worker?.bindings?.some((binding) => {
 								if ("service" in binding) {
