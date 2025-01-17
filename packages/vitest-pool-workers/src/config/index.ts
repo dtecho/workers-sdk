@@ -156,28 +156,28 @@ function createConfigPlugin(): Plugin<WorkersConfigPluginAPI> {
 			config.ssr.target = "webworker";
 
 			// Pre-bundling dependencies with vite
-			// @see https://github.com/flarelabs-net/vite-plugin-cloudflare/blob/2e2bde62f9a729f26bbaf768840ded3393f994b8/packages/vite-plugin-cloudflare/src/cloudflare-environment.ts#L153-L176
-			config.ssr.optimizeDeps = {
-				noDiscovery: false,
-				exclude: [
-					...cloudflareBuiltInModules,
-					...builtinModules.concat(builtinModules.map((m) => `node:${m}`)),
+			config.test.deps ??= {};
+			config.test.deps.optimizer ??= {};
+			config.test.deps.optimizer.ssr ??= {};
+			config.test.deps.optimizer.ssr.enabled = true;
+			config.test.deps.optimizer.ssr.exclude = [
+				...cloudflareBuiltInModules,
+				...builtinModules.concat(builtinModules.map((m) => `node:${m}`)),
+			];
+			config.test.deps.optimizer.ssr.esbuildOptions = {
+				platform: "neutral",
+				resolveExtensions: [
+					".mjs",
+					".js",
+					".mts",
+					".ts",
+					".jsx",
+					".tsx",
+					".json",
+					".cjs",
+					".cts",
+					".ctx",
 				],
-				esbuildOptions: {
-					platform: "neutral",
-					resolveExtensions: [
-						".mjs",
-						".js",
-						".mts",
-						".ts",
-						".jsx",
-						".tsx",
-						".json",
-						".cjs",
-						".cts",
-						".ctx",
-					],
-				},
 			};
 
 			// Ideally, we would force `pool` to be @cloudflare/vitest-pool-workers here,

@@ -323,7 +323,8 @@ async function viteResolve(
 		//       (Specifically, the "tinyrainbow" module imports `node:tty` as `tty`)
 		return id;
 	}
-	return resolved.id;
+	// strip off deps optimization hash from vite
+	return resolved.id.split("v=")[0];
 }
 
 type ResolveMethod = "import" | "require";
