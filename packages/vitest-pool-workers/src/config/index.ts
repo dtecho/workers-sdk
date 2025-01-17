@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
+import { builtinModules } from "node:module";
 import path from "node:path";
 import { MessageChannel, receiveMessageOnPort } from "node:worker_threads";
 import type {
@@ -110,6 +111,13 @@ function ensureArrayExcludes<T>(array: T[], items: T[]) {
 const requiredConditions = ["workerd", "worker", "browser"];
 const requiredMainFields = ["browser", "module", "jsnext:main", "jsnext"];
 
+const cloudflareBuiltInModules = [
+	"cloudflare:email",
+	"cloudflare:sockets",
+	"cloudflare:workers",
+	"cloudflare:workflows",
+];
+
 function createConfigPlugin(): Plugin<WorkersConfigPluginAPI> {
 	// Use a unique ID for each `cloudflare:test` module so updates in one `main`
 	// don't trigger re-runs in all other projects, just the one that changed.
@@ -146,6 +154,31 @@ function createConfigPlugin(): Plugin<WorkersConfigPluginAPI> {
 			// Apply `package.json` `browser` field remapping in SSR mode:
 			// https://github.com/vitejs/vite/blob/v5.1.4/packages/vite/src/node/plugins/resolve.ts#L175
 			config.ssr.target = "webworker";
+
+			// Pre-bundling dependencies with vite
+			// @see https://github.com/flarelabs-net/vite-plugin-cloudflare/blob/2e2bde62f9a729f26bbaf768840ded3393f994b8/packages/vite-plugin-cloudflare/src/cloudflare-environment.ts#L153-L176
+			config.ssr.optimizeDeps = {
+				noDiscovery: false,
+				exclude: [
+					...cloudflareBuiltInModules,
+					...builtinModules.concat(builtinModules.map((m) => `node:${m}`)),
+				],
+				esbuildOptions: {
+					platform: "neutral",
+					resolveExtensions: [
+						".mjs",
+						".js",
+						".mts",
+						".ts",
+						".jsx",
+						".tsx",
+						".json",
+						".cjs",
+						".cts",
+						".ctx",
+					],
+				},
+			};
 
 			// Ideally, we would force `pool` to be @cloudflare/vitest-pool-workers here,
 			// but the tests in `packages/vitest-pool-workers` define `pool` as "../..".
