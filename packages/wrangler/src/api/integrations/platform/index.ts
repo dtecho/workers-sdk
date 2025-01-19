@@ -1,5 +1,6 @@
 import { kCurrentWorker, Miniflare } from "miniflare";
-import { getAssetsOptions } from "../../../assets";
+import type { AssetsOptions} from "../../../assets";
+import { getAssetsOptions, NonExistentAssetsDirError } from "../../../assets";
 import { readConfig } from "../../../config";
 import { DEFAULT_MODULE_RULES } from "../../../deployment-bundle/rules";
 import { getBindings } from "../../../dev";
@@ -159,6 +160,28 @@ async function getMiniflareOptionsFromConfig(
 		imagesLocalMode: false,
 	});
 
+
+	let processedAssetOptions: AssetsOptions|undefined;
+
+	try {
+		processedAssetOptions = getAssetsOptions(
+			{ assets: undefined },
+			rawConfig,
+		);
+	} catch (e) {
+		const isNonExistentError = e instanceof NonExistentAssetsDirError;
+		// we want to loosen up the assets directory existence restriction here,
+		// since `getPlatformProxy` can be run when the assets directory doesn't actual
+		// exist (yes), but all other exceptions should still be thrown
+		if(!isNonExistentError) {
+			throw e;
+		}
+	}
+
+	const assetOptions = processedAssetOptions
+		? buildAssetOptions({ assets: processedAssetOptions })
+		: {};
+
 	const persistOptions = getMiniflarePersistOptions(options.persist);
 
 	const serviceBindings = await getServiceBindings(bindings.services);
@@ -173,6 +196,7 @@ async function getMiniflareOptionsFromConfig(
 					...serviceBindings,
 					...bindingOptions.serviceBindings,
 				},
+				...assetOptions,
 			},
 			...externalWorkers,
 		],
