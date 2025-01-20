@@ -40,9 +40,10 @@
 		"watch": "tsup --watch"
 	},
 	"dependencies": {
+		"@cloudflare/unenv-preset": "1.x",
 		"@hattip/adapter-node": "^0.0.49",
 		"miniflare": "workspace:*",
-		"unenv": "catalog:vite-plugin",
+		"unenv": "npm:unenv-nightly@2.0.0-20241218-183400-5d6aec3",
 		"ws": "^8.18.0"
 	},
 	"devDependencies": {
