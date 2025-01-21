@@ -324,7 +324,20 @@ async function viteResolve(
 		return id;
 	}
 	// strip off deps optimization hash from vite
-	return resolved.id.split("v=")[0];
+	// @see https://github.com/cloudflare/workers-sdk/pull/5673
+	if (resolved.id.includes("?v=")) {
+		const [id, hash] = resolved.id.split("?v=");
+		debuglog(
+			"Trimming deps optimization hash from vite, id =",
+			id,
+			"v =",
+			hash
+		);
+
+		return id;
+	}
+
+	return resolved.id;
 }
 
 type ResolveMethod = "import" | "require";
@@ -476,6 +489,9 @@ async function load(
 	if (disableCjsEsmShim) {
 		filePath = trimSuffix(disableCjsEsmShimSuffix, filePath);
 	}
+
+	// debuglog("Trimming ");
+	// filePath = filePath.split("?v=")[0];
 
 	let isEsm =
 		filePath.endsWith(".mjs") ||
