@@ -172,7 +172,7 @@ async function getMiniflareOptionsFromConfig(
 		const isNonExistentError = e instanceof NonExistentAssetsDirError;
 		// we want to loosen up the assets directory existence restriction here,
 		// since `getPlatformProxy` can be run when the assets directory doesn't actual
-		// exist (yes), but all other exceptions should still be thrown
+		// exist, but all other exceptions should still be thrown
 		if(!isNonExistentError) {
 			throw e;
 		}
