@@ -16,9 +16,6 @@ example:
 	"assets": {
 		"directory": "./public/",
 		"binding": "ASSETS"
-	},
-	"vars": {
-		"MY_VAR": "my-var"
 	}
 }
 ```
