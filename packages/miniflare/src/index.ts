@@ -744,6 +744,7 @@ export class Miniflare {
 	constructor(opts: MiniflareOptions) {
 		// Split and validate options
 		const [sharedOpts, workerOpts] = validateOptions(opts);
+		console.log("OPTS", JSON.stringify(workerOpts[0].core.serviceBindings));
 		this.#sharedOpts = sharedOpts;
 		this.#workerOpts = workerOpts;
 
@@ -1205,6 +1206,8 @@ export class Miniflare {
 					}
 				}
 			}
+
+			console.log("BINDINGS", workerBindings);
 
 			// Collect all services required by this worker
 			const unsafeStickyBlobs = sharedOpts.core.unsafeStickyBlobs ?? false;

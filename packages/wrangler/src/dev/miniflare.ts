@@ -1004,6 +1004,8 @@ export async function buildMiniflareOptions(
 	const persistOptions = buildPersistOptions(config.localPersistencePath);
 	const assetOptions = buildAssetOptions(config);
 
+	console.log("BINDING_OPTIONS", bindingOptions.serviceBindings);
+
 	const options: MiniflareOptions = {
 		host: config.initialIp,
 		port: config.initialPort,

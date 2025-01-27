@@ -29,6 +29,7 @@ interface Env {
 
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+		console.log("ROUTER WORKER", request.url);
 		let sentry: ReturnType<typeof setupSentry> | undefined;
 		let userWorkerInvocation = false;
 		const analytics = new Analytics(env.ANALYTICS);
