@@ -3,6 +3,7 @@ import path from "node:path";
 import { getAssetsOptions, validateAssetsArgsAndConfig } from "../assets";
 import { configFileName, readConfig } from "../config";
 import { getEntry } from "../deployment-bundle/entry";
+import { getCIOverrideName } from "../environment-variables/misc-variables";
 import { UserError } from "../errors";
 import { run } from "../experimental-flags";
 import { logger } from "../logger";
@@ -26,7 +27,9 @@ import type {
 async function standardPricingWarning(config: Config) {
 	if (config.usage_model !== undefined) {
 		logger.warn(
-			`The \`usage_model\` defined in your ${configFileName(config.configPath)} file is deprecated and no longer used. Visit our developer docs for details: https://developers.cloudflare.com/workers/wrangler/configuration/#usage-model`
+			`The \`usage_model\` defined in your ${configFileName(
+				config.configPath
+			)} file is deprecated and no longer used. Visit our developer docs for details: https://developers.cloudflare.com/workers/wrangler/configuration/#usage-model`
 		);
 	}
 }
@@ -311,7 +314,9 @@ async function deployWorker(args: DeployArgs) {
 
 	if (args.latest) {
 		logger.warn(
-			`Using the latest version of the Workers runtime. To silence this warning, please choose a specific version of the runtime with --compatibility-date, or add a compatibility_date to your ${configFileName(config.configPath)} file.`
+			`Using the latest version of the Workers runtime. To silence this warning, please choose a specific version of the runtime with --compatibility-date, or add a compatibility_date to your ${configFileName(
+				config.configPath
+			)} file.`
 		);
 	}
 
@@ -336,7 +341,18 @@ async function deployWorker(args: DeployArgs) {
 	}
 
 	const beforeUpload = Date.now();
-	const name = getScriptName(args, config);
+	let name = getScriptName(args, config);
+
+	const ciOverrideName = getCIOverrideName();
+	let workerNameOverridden = false;
+	if (ciOverrideName !== undefined && ciOverrideName !== name) {
+		logger.warn(
+			`Failed to match Worker name. Your config file is using the worker name "${name}", but the CI system expected "${ciOverrideName}". Overriding using the CI provided worker name. Workers Builds connected builds will attempt to open a pull request to fix this config name mismatch.`
+		);
+		name = ciOverrideName;
+		workerNameOverridden = true;
+	}
+
 	assert(
 		name,
 		'You need to provide a name when publishing a worker. Either pass it as a cli arg with `--name <name>` or in your config file as `name = "<name>"`'
@@ -390,6 +406,8 @@ async function deployWorker(args: DeployArgs) {
 		worker_tag: workerTag,
 		version_id: versionId,
 		targets,
+		worker_name_overridden: workerNameOverridden,
+		wrangler_environment: args.env,
 	});
 
 	metrics.sendMetricsEvent(

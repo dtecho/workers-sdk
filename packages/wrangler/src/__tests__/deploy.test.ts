@@ -175,6 +175,37 @@ describe("deploy", () => {
 		expect(std.err).toMatchInlineSnapshot(`""`);
 	});
 
+	it("should successfully override name with WRANGLER_CI_OVERRIDE_NAME", async () => {
+		vi.stubEnv("WRANGLER_CI_OVERRIDE_NAME", "test-name");
+		writeWorkerSource();
+		writeWranglerConfig({
+			name: "name-to-override",
+			routes: ["example.com/some-route/*"],
+			workers_dev: true,
+		});
+		mockServiceScriptData({
+			scriptName: "test-name",
+			script: { id: "test-name", tag: "abc123" },
+		});
+		mockUploadWorkerRequest();
+		mockSubDomainRequest();
+		mockGetWorkerSubdomain({ enabled: false });
+		mockUpdateWorkerSubdomain({ enabled: true });
+		mockPublishRoutesRequest({ routes: ["example.com/some-route/*"] });
+
+		await runWrangler("deploy ./index.js");
+		expect(std.out).toMatchInlineSnapshot(`
+			"Total Upload: xx KiB / gzip: xx KiB
+			Worker Startup Time: 100 ms
+			Uploaded test-name (TIMINGS)
+			Deployed test-name triggers (TIMINGS)
+			  https://test-name.test-sub-domain.workers.dev
+			  example.com/some-route/*
+			Current Version ID: Galaxy-Class"
+		`);
+		expect(std.err).toMatchInlineSnapshot(`""`);
+	});
+
 	it("should resolve wrangler.toml relative to the entrypoint", async () => {
 		fs.mkdirSync("./some-path/worker", { recursive: true });
 		fs.writeFileSync(

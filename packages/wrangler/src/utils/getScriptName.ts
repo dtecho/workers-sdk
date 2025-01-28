@@ -9,7 +9,9 @@ export function getScriptName(
 ): string | undefined {
 	if (args.name && isLegacyEnv(config) && args.env) {
 		throw new CommandLineArgsError(
-			`In legacy environment mode you cannot use --name and --env together. If you want to specify a Worker name for a specific environment you can add the following to your ${configFileName(config.configPath)} file:\n` +
+			`In legacy environment mode you cannot use --name and --env together. If you want to specify a Worker name for a specific environment you can add the following to your ${configFileName(
+				config.configPath
+			)} file:\n` +
 				formatConfigSnippet(
 					{
 						env: {

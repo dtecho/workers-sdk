@@ -32,6 +32,7 @@ import { validateNodeCompatMode } from "../deployment-bundle/node-compat";
 import { loadSourceMaps } from "../deployment-bundle/source-maps";
 import { confirm } from "../dialogs";
 import { getMigrationsToUpload } from "../durable";
+import { getCIOverrideName } from "../environment-variables/misc-variables";
 import { UserError } from "../errors";
 import { logger } from "../logger";
 import { verifyWorkerMatchesCITag } from "../match-tag";
@@ -330,7 +331,9 @@ export const versionsUploadCommand = createCommand({
 
 		if (args.latest) {
 			logger.warn(
-				`Using the latest version of the Workers runtime. To silence this warning, please choose a specific version of the runtime with --compatibility-date, or add a compatibility_date to your ${configFileName(config.configPath)} file.\n`
+				`Using the latest version of the Workers runtime. To silence this warning, please choose a specific version of the runtime with --compatibility-date, or add a compatibility_date to your ${configFileName(
+					config.configPath
+				)} file.\n`
 			);
 		}
 
@@ -339,7 +342,17 @@ export const versionsUploadCommand = createCommand({
 		const cliAlias = collectKeyValues(args.alias);
 
 		const accountId = args.dryRun ? undefined : await requireAuth(config);
-		const name = getScriptName(args, config);
+		let name = getScriptName(args, config);
+
+		const ciOverrideName = getCIOverrideName();
+		let workerNameOverridden = false;
+		if (ciOverrideName !== undefined && ciOverrideName !== name) {
+			logger.warn(
+				`Failed to match Worker name. Your config file is using the worker name "${name}", but the CI system expected "${ciOverrideName}". Overriding using the CI provided worker name.`
+			);
+			name = ciOverrideName;
+			workerNameOverridden = true;
+		}
 
 		assert(
 			name,
@@ -393,6 +406,8 @@ export const versionsUploadCommand = createCommand({
 			worker_tag: workerTag,
 			version_id: versionId,
 			preview_url: versionPreviewUrl,
+			worker_name_overridden: workerNameOverridden,
+			wrangler_environment: args.env,
 		});
 	},
 });
@@ -400,7 +415,9 @@ export const versionsUploadCommand = createCommand({
 async function standardPricingWarning(config: Config) {
 	if (config.usage_model !== undefined) {
 		logger.warn(
-			`The \`usage_model\` defined in your ${configFileName(config.configPath)} file is deprecated and no longer used. Visit our developer docs for details: https://developers.cloudflare.com/workers/wrangler/configuration/#usage-model`
+			`The \`usage_model\` defined in your ${configFileName(
+				config.configPath
+			)} file is deprecated and no longer used. Visit our developer docs for details: https://developers.cloudflare.com/workers/wrangler/configuration/#usage-model`
 		);
 	}
 }
@@ -469,9 +486,17 @@ export default async function versionsUpload(props: Props): Promise<{
 			""
 		).padStart(2, "0")}-${(new Date().getDate() + "").padStart(2, "0")}`;
 
-		throw new UserError(`A compatibility_date is required when uploading a Worker Version. Add the following to your ${configFileName(config.configPath)} file:
+		throw new UserError(`A compatibility_date is required when uploading a Worker Version. Add the following to your ${configFileName(
+			config.configPath
+		)} file:
     \`\`\`
-	${(formatConfigSnippet({ compatibility_date: compatibilityDateStr }, config.configPath), false)}
+	${
+		(formatConfigSnippet(
+			{ compatibility_date: compatibilityDateStr },
+			config.configPath
+		),
+		false)
+	}
     \`\`\`
     Or you could pass it in your terminal as \`--compatibility-date ${compatibilityDateStr}\`
 See https://developers.cloudflare.com/workers/platform/compatibility-dates for more information.`);
@@ -538,13 +563,17 @@ See https://developers.cloudflare.com/workers/platform/compatibility-dates for m
 
 	if (config.text_blobs && format === "modules") {
 		throw new UserError(
-			`You cannot configure [text_blobs] with an ES module worker. Instead, import the file directly in your code, and optionally configure \`[rules]\` in your ${configFileName(config.configPath)} file`
+			`You cannot configure [text_blobs] with an ES module worker. Instead, import the file directly in your code, and optionally configure \`[rules]\` in your ${configFileName(
+				config.configPath
+			)} file`
 		);
 	}
 
 	if (config.data_blobs && format === "modules") {
 		throw new UserError(
-			`You cannot configure [data_blobs] with an ES module worker. Instead, import the file directly in your code, and optionally configure \`[rules]\` in your ${configFileName(config.configPath)} file`
+			`You cannot configure [data_blobs] with an ES module worker. Instead, import the file directly in your code, and optionally configure \`[rules]\` in your ${configFileName(
+				config.configPath
+			)} file`
 		);
 	}
 
