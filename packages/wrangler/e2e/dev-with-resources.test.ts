@@ -280,6 +280,10 @@ describe.sequential.each(RUNTIMES)("Bindings: $flags", ({ runtime, flags }) => {
 		const worker = helper.runLongLived(
 			`wrangler dev ${flags} --port ${port} --inspector-port ${inspectorPort}`
 		);
+		const matches = await worker.readUntil(
+			/^TEXT_BLOB:\s+\S+\.txt\s+\[connected to remote resource\]$/
+		);
+		expect(matches.length).toBe(1);
 		const { url } = await worker.waitForReady();
 		const res = await fetch(url);
 		expect(await res.json()).toEqual({
@@ -310,6 +314,10 @@ describe.sequential.each(RUNTIMES)("Bindings: $flags", ({ runtime, flags }) => {
 		const worker = helper.runLongLived(
 			`wrangler dev ${flags} --port ${port} --inspector-port ${inspectorPort}`
 		);
+		const matches = await worker.readUntil(
+			/^ADD_MODULE:\s+\S+\.wasm\s+\[connected to remote resource\]$/
+		);
+		expect(matches.length).toBe(1);
 		const { url } = await worker.waitForReady();
 		const res = await fetch(url);
 		expect(await res.text()).toBe("3");
@@ -344,8 +352,6 @@ describe.sequential.each(RUNTIMES)("Bindings: $flags", ({ runtime, flags }) => {
 		const worker = helper.runLongLived(
 			`wrangler dev ${flags} --port ${port} --inspector-port ${inspectorPort}`
 		);
-		const matches = await worker.readUntil(/NAMESPACE/);
-		expect(matches).toEqual([]);
 		const { url } = await worker.waitForReady();
 		const res = await fetch(url);
 		expect(await res.text()).toBe("existing-value");
