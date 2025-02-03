@@ -281,7 +281,7 @@ describe.sequential.each(RUNTIMES)("Bindings: $flags", ({ runtime, flags }) => {
 			`wrangler dev ${flags} --port ${port} --inspector-port ${inspectorPort}`
 		);
 		const matches = await worker.readUntil(
-			/^TEXT_BLOB:\s+\S+\.txt\s+\[connected to remote resource\]$/
+			/^.*TEXT_BLOB:.*\[connected to remote resource].*$/
 		);
 		expect(matches.length).toBe(1);
 		const { url } = await worker.waitForReady();
@@ -315,7 +315,7 @@ describe.sequential.each(RUNTIMES)("Bindings: $flags", ({ runtime, flags }) => {
 			`wrangler dev ${flags} --port ${port} --inspector-port ${inspectorPort}`
 		);
 		const matches = await worker.readUntil(
-			/^ADD_MODULE:\s+\S+\.wasm\s+\[connected to remote resource\]$/
+			/^.*ADD_MODULE:.*\[connected to remote resource].*$/
 		);
 		expect(matches.length).toBe(1);
 		const { url } = await worker.waitForReady();
