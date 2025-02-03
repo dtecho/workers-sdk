@@ -344,6 +344,8 @@ describe.sequential.each(RUNTIMES)("Bindings: $flags", ({ runtime, flags }) => {
 		const worker = helper.runLongLived(
 			`wrangler dev ${flags} --port ${port} --inspector-port ${inspectorPort}`
 		);
+		const matches = await worker.readUntil(/NAMESPACE/);
+		expect(matches).toEqual([]);
 		const { url } = await worker.waitForReady();
 		const res = await fetch(url);
 		expect(await res.text()).toBe("existing-value");
